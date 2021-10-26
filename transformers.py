@@ -2,7 +2,6 @@ from sklearn.base import TransformerMixin, BaseEstimator
 import numpy as np
 import pandas as pd
 from sklearn.impute import MissingIndicator
-from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer, SimpleImputer
 from sklearn.preprocessing import PowerTransformer, OneHotEncoder, KBinsDiscretizer
 from sklearn.pipeline import Pipeline
@@ -10,7 +9,7 @@ from sklearn.pipeline import FeatureUnion
 import re 
 
 
-### 
+# Passthrough (no transformation)
 class Passthrough(BaseEstimator, TransformerMixin):
     
     def fit(self, X, y = None):
@@ -23,7 +22,8 @@ class Passthrough(BaseEstimator, TransformerMixin):
     def get_feature_names(self):
         return self.features
 
-###
+
+# Create missing value dummy variables
 class MissingIndicator2(MissingIndicator):
 
     def fit(self, X, y = None):
@@ -40,7 +40,7 @@ class MissingIndicator2(MissingIndicator):
     def get_feature_names(self):
         return self._missing_colnames 
     
-###    
+# SimpleImputer that includes feature names
 class SimpleImputer2(SimpleImputer):
         
     def fit(self, X, y = None):
@@ -55,7 +55,7 @@ class SimpleImputer2(SimpleImputer):
     def get_feature_names(self):
         return self._features     
      
-###    
+# IterativeImputer with feature names
 class IterativeImputer2(IterativeImputer):
         
     def fit_transform(self, X, y = None):
@@ -70,7 +70,7 @@ class IterativeImputer2(IterativeImputer):
     def get_feature_names(self):
         return self._features  
     
-###    
+# PowerTransformer with feature names
 class PowerTransformer2(PowerTransformer):
         
     def fit(self, X, y = None):
@@ -85,7 +85,7 @@ class PowerTransformer2(PowerTransformer):
     def get_feature_names(self):
         return self._features   
     
-### Bin continuous variable and get feature names    
+# Bin continuous variable and get feature names
 class Binner(KBinsDiscretizer):
    
     def fit(self, X, y=None):
@@ -111,7 +111,7 @@ class Binner(KBinsDiscretizer):
     def get_feature_names(self):
         return self._features   
 
-###
+# lump rare levels of categorical variable into "rare" category
 class Lumper(BaseEstimator, TransformerMixin):
     
     def __init__(self, min_cases = 20):
@@ -150,8 +150,7 @@ class Lumper(BaseEstimator, TransformerMixin):
     def get_pars(self):
         return self.rare_cols, self.rare_levels
 
-### One-Hot encoder
-
+# one-hot encoder that includes feature names
 class OneHotEncoder2(OneHotEncoder):
     
     def fit(self, X, y=None):
@@ -182,9 +181,7 @@ class OneHotEncoder2(OneHotEncoder):
         return pd.DataFrame(out, columns = self._feature_names)
     
 
-
-
-### 
+# create sklearn pipeline with feature names
 class Pipeline2(Pipeline):
     
     def get_feature_names(self):  
@@ -192,7 +189,7 @@ class Pipeline2(Pipeline):
         self._feature_names = self.named_steps[last_step].get_feature_names()
         return self._feature_names
     
-### 
+# FeatureUnion with feature names
 class FeatureUnion2(FeatureUnion):
     
     def get_feature_names(self):
@@ -207,9 +204,6 @@ class FeatureUnion2(FeatureUnion):
         out = self.fit(X, y).transform(X)
         return pd.DataFrame(out, columns = self.get_feature_names())
 
-###    
-
-        
 
 # create custom transformer to replace rare categories with "rare"
 def replace_rare(x, n = 20):
@@ -221,10 +215,7 @@ def replace_rare(x, n = 20):
         return x
 
 
-    
-
-    
-###    
+# scale continuous variables by group
 class GroupScaler(BaseEstimator, TransformerMixin):
     def __init__(self, group):
         self._group = group
@@ -240,12 +231,13 @@ class GroupScaler(BaseEstimator, TransformerMixin):
     
     def get_feature_names(self):
         return self._features
-    
-### convert strings to dates
+
+
+# convert strings to dates
 def to_date(x):
     return pd.to_datetime(x.replace(r'^\s*$', np.nan, regex=True))
 
-### clean up strings
+# clean up strings
 def clean_string(x, fill = "missing"): 
     out = x.astype('str').str.strip().fillna(fill)
     return out.replace(r'^\s*$', fill, regex=True)
@@ -256,9 +248,11 @@ def clean_numeric(x):
 def binarize_numeric(x):
     return np.where(clean_numeric(x) > 0, 1, 0)
 
-### count NaN's
+
+# count NaN's
 def count_nan(x):
     return x.isna().sum()
+
 
 ### summarize variable by group
     
